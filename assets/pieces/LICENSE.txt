@@ -1,0 +1,3 @@
+Chess piece SVG artwork based on the classic Staunton / Cburnett chess piece set
+(original Cburnett SVG designs by Colin M.L. Burnett, dual-licensed under
+CC BY-SA 3.0 / GFDL / GPL / BSD).

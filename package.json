@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "chess.js": "^1.4.0"
+  },
+  "name": "sachy",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Přehledná dětská šachová hra v HTML, CSS a JavaScriptu",
+  "scripts": {
+    "test": "node tests/verify.mjs"
+  }
+}

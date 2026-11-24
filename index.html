@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>šachy</title>
+  <meta name="description" content="Přehledná dětská šachová hra pro jednoho i dva hráče na jednom zařízení." />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <img id="brand-icon" class="brand-icon" alt="" width="30" height="30" draggable="false" />
+        <h1 class="brand-title">šachy</h1>
+      </div>
+      <button type="button" id="btn-new-game" class="btn btn-outline">Nová hra</button>
+    </header>
+
+    <main class="game-layout">
+      <section class="play-column" aria-label="Šachovnice a panely hráčů">
+        <!-- Top player panel: Computer or Black (rotated 180deg in PvP) -->
+        <section id="panel-black" class="player-panel player-panel--black" aria-label="Panel černého hráče">
+          <div class="player-row-main">
+            <div class="player-identity">
+              <img id="black-avatar" class="player-avatar" alt="" width="34" height="34" draggable="false" />
+              <div class="player-name-block">
+                <div class="player-name-line">
+                  <span id="black-name" class="player-name">Počítač</span>
+                  <span class="player-color-tag">Černé</span>
+                </div>
+                <div class="player-meta-line">
+                  <span id="black-turn-badge" class="turn-pill">Čeká na tah</span>
+                  <span id="black-selected" class="selected-piece-label" hidden></span>
+                </div>
+              </div>
+            </div>
+            <div id="black-actions" class="player-actions" hidden>
+              <button type="button" id="btn-hint-black" class="btn btn-secondary">Nápověda</button>
+              <button type="button" id="btn-confirm-black" class="btn btn-primary" disabled>Potvrdit tah</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Chessboard with coordinates, fixed 64 squares, trail & animation overlays -->
+        <div id="board-frame" class="board-frame">
+          <div id="coords-top" class="coords coords-files coords-top" aria-hidden="true" hidden>
+            <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+          </div>
+
+          <div class="board-middle">
+            <div id="coords-left" class="coords coords-ranks coords-left" aria-hidden="true">
+              <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+            </div>
+
+            <div class="board-stage">
+              <div id="board-grid" class="board-grid" role="grid" aria-label="Šachovnice"></div>
+              <svg id="trail-layer" class="trail-layer" viewBox="0 0 800 800" aria-hidden="true"></svg>
+              <div id="animation-layer" class="animation-layer" aria-hidden="true"></div>
+            </div>
+
+            <div id="coords-right" class="coords coords-ranks coords-right" aria-hidden="true" hidden>
+              <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+            </div>
+          </div>
+
+          <div id="coords-bottom" class="coords coords-files coords-bottom" aria-hidden="true">
+            <span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span>
+          </div>
+        </div>
+
+        <!-- Bottom player panel: Human White -->
+        <section id="panel-white" class="player-panel player-panel--white is-active" aria-label="Panel bílého hráče">
+          <div class="player-row-main">
+            <div class="player-identity">
+              <img id="white-avatar" class="player-avatar" alt="" width="34" height="34" draggable="false" />
+              <div class="player-name-block">
+                <div class="player-name-line">
+                  <span id="white-name" class="player-name">Ty</span>
+                  <span class="player-color-tag">Bílé</span>
+                </div>
+                <div class="player-meta-line">
+                  <span id="white-turn-badge" class="turn-pill is-turn">Na tahu</span>
+                  <span id="white-selected" class="selected-piece-label" hidden></span>
+                </div>
+              </div>
+            </div>
+            <div id="white-actions" class="player-actions">
+              <button type="button" id="btn-hint-white" class="btn btn-secondary">Nápověda</button>
+              <button type="button" id="btn-confirm-white" class="btn btn-primary" disabled>Potvrdit tah</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <aside class="info-column" aria-label="Stav hry a nastavení">
+        <!-- Compact game status card (ALWAYS before mode settings) -->
+        <section id="status-card" class="card status-card" aria-live="polite">
+          <div class="status-header">
+            <span id="status-dot" class="status-dot" aria-hidden="true"></span>
+            <h2 id="status-title" class="status-title">Na tahu je bílý</h2>
+          </div>
+          <p id="status-message" class="status-message">Klepni na svou figurku a pak na cílové políčko.</p>
+          <div id="preview-bar" class="preview-bar" hidden>
+            <span id="preview-text" class="preview-text"></span>
+            <button type="button" id="btn-cancel-preview" class="btn btn-ghost">Rozmyslet si tah</button>
+          </div>
+        </section>
+
+        <!-- Opponent mode selector -->
+        <section id="mode-card" class="card mode-card" aria-label="Výběr soupeře">
+          <div class="mode-row">
+            <span class="mode-label">Soupeř</span>
+            <div class="segmented" role="group" aria-label="Herní režim">
+              <button type="button" id="btn-mode-computer" class="segmented-btn is-selected" aria-pressed="true">S počítačem</button>
+              <button type="button" id="btn-mode-pvp" class="segmented-btn" aria-pressed="false">Ve dvou</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Collapsible move history -->
+        <details id="history-details" class="card collapsible-card">
+          <summary class="collapsible-summary">
+            <span>Historie tahů</span>
+            <span id="history-count" class="count-badge">0</span>
+          </summary>
+          <div class="collapsible-body">
+            <p id="history-empty" class="muted-note">Zatím nebyl odehrán žádný tah.</p>
+            <ol id="history-list" class="history-list" hidden></ol>
+          </div>
+        </details>
+
+        <!-- Collapsible rules & controls -->
+        <details id="rules-details" class="card collapsible-card">
+          <summary class="collapsible-summary">
+            <span>Jak se hraje a pravidla</span>
+          </summary>
+          <div class="collapsible-body rules-content">
+            <ul>
+              <li><strong>Tah na dvě klepnutí:</strong> Klepni na svou figurku a potom na políčko, kam chceš jít. Uvidíš průhledný náhled.</li>
+              <li><strong>Potvrzení tahu:</strong> Tah se provede až po stisknutí tlačítka <em>Potvrdit tah</em>. Do té doby můžeš vybrat jiné pole nebo klepnout na <em>Rozmyslet si tah</em>.</li>
+              <li><strong>Nápověda:</strong> Tlačítko <em>Nápověda</em> ukáže zelenými tečkami volná pole a zeleným rámečkem možnosti braní.</li>
+              <li><strong>Zvláštní tahy:</strong> Hra zná rošádu (král o dvě pole k věži), braní mimochodem i proměnu pěšce na poslední řadě.</li>
+              <li><strong>Šach, mat a pat:</strong> V šachu musíš nejprve zachránit krále. Mat nastane jen tehdy, když je král v šachu a nejde mu pomoci. Když král v šachu není, ale nejde táhnout, je to remíza (pat).</li>
+              <li><strong>Ve dvou:</strong> Polož telefon nebo iPad mezi sebe. Horní panel, černé figurky i souřadnice se otočí směrem k černému hráči.</li>
+            </ul>
+          </div>
+        </details>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Pawn Promotion Picker Modal -->
+  <div id="promotion-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="promotion-title" hidden>
+    <div id="promotion-dialog" class="modal-card">
+      <h2 id="promotion-title" class="modal-title">Vyber novou figurku</h2>
+      <p class="modal-subtitle">Pěšec došel na konec šachovnice. V co se promění?</p>
+      <div id="promotion-options" class="promotion-grid">
+        <button type="button" class="promo-choice" data-promo="q">
+          <img alt="" draggable="false" />
+          <span>Dáma</span>
+        </button>
+        <button type="button" class="promo-choice" data-promo="r">
+          <img alt="" draggable="false" />
+          <span>Věž</span>
+        </button>
+        <button type="button" class="promo-choice" data-promo="b">
+          <img alt="" draggable="false" />
+          <span>Střelec</span>
+        </button>
+        <button type="button" class="promo-choice" data-promo="n">
+          <img alt="" draggable="false" />
+          <span>Jezdec</span>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-promo-cancel" class="btn btn-ghost">Zrušit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog Modal (New Game / Mode Change) -->
+  <div id="confirm-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+    <div class="modal-card modal-card--compact">
+      <h2 id="confirm-title" class="modal-title">Začít novou hru?</h2>
+      <p id="confirm-message" class="modal-subtitle">Rozehraná partie se zahodí a figurky se vrátí na začátek.</p>
+      <div class="modal-actions">
+        <button type="button" id="btn-confirm-cancel" class="btn btn-secondary">Zůstat ve hře</button>
+        <button type="button" id="btn-confirm-ok" class="btn btn-primary">Ano, nová hra</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
